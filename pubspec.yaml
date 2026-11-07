@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.8.0
   flutter_svg: ^2.0.10
+  url_launcher: ^6.3.0
+  font_awesome_flutter: ^11.0.0
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +63,13 @@ flutter:
 
   assets:
     - assets/images/logo.svg
+    - assets/images/logo_main.png
+    - assets/images/gogo_watermark.png
+    - assets/images/app_icon.png
+    - assets/images/step_recibido.svg
+    - assets/images/step_preparando.svg
+    - assets/images/step_en_camino.svg
+    - assets/images/step_entregado.svg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

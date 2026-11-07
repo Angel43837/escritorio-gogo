@@ -97,19 +97,83 @@ class SupabaseService {
     await _client.from('orders').update({'status': 'cancelled'}).eq('id', orderId);
   }
 
-  // Llama a todos los repartidores de flota en línea — el primero que
-  // acepte se queda el pedido (ver respond_rider_call en la base, valida
-  // del lado del servidor que solo uno pueda aceptar).
+  // Llama a todos los repartidores en línea — el primero que acepte se
+  // queda el pedido (ver respond_rider_call en la base, valida del lado
+  // del servidor que solo uno pueda aceptar). Ahora cobra $38 MXN ($3
+  // cuota + $35 de envío para quien acepte) a la tarjeta guardada del
+  // restaurante antes de crear la llamada — todo en un solo paso del lado
+  // del servidor (ver restaurant-call-rider) para que nunca quede un
+  // cobro sin llamada, ni una llamada sin cobro.
   static Future<String> callRider(String restaurantId, String restaurantName) async {
-    final data = await _client.from('rider_calls').insert({
-      'restaurant_id': restaurantId,
-      'restaurant_name': restaurantName,
-    }).select('id').single();
-    return data['id'] as String;
+    try {
+      final res = await _client.functions.invoke('restaurant-call-rider', body: {
+        'restaurantId': restaurantId,
+        'restaurantName': restaurantName,
+      });
+      final data = res.data as Map<String, dynamic>;
+      return data['id'] as String;
+    } catch (e) {
+      throw Exception(_functionErrorMessage(e));
+    }
+  }
+
+  static String _functionErrorMessage(Object e) {
+    if (e is FunctionException) {
+      final details = e.details;
+      if (details is Map && details['error'] != null) return details['error'].toString();
+      return e.reasonPhrase ?? 'Error de Stripe';
+    }
+    return e.toString();
   }
 
   static Future<Map<String, dynamic>?> getRiderCall(String callId) async {
     return await _client.from('rider_calls').select().eq('id', callId).maybeSingle();
+  }
+
+  // Si nadie acepta, el dueño puede desistir en vez de quedarse esperando
+  // para siempre (ver cancel_rider_call en la base) — y ahora también se
+  // le reembolsa de inmediato, sin esperar las 3h del reembolso automático.
+  static Future<void> cancelRiderCall(String callId) async {
+    await _client.rpc('cancel_rider_call', params: {'p_call_id': callId});
+    try {
+      await _client.functions.invoke('rider-call-expire-check', body: {'callId': callId});
+    } catch (_) {}
+  }
+
+  // Marca la llamada como entregada — hasta aquí se queda cobrado de
+  // verdad el restaurante y hasta aquí se suma al saldo retirable del
+  // rider (ver mark_rider_call_delivered). Lo puede hacer el dueño desde
+  // aquí o el propio rider desde su app.
+  static Future<bool> markRiderCallDelivered(String callId) async {
+    final res = await _client.rpc('mark_rider_call_delivered', params: {'p_call_id': callId});
+    return res == true;
+  }
+
+  // ── Método de pago del restaurante (tarjeta guardada en Stripe) ────────────
+
+  static Future<Map<String, dynamic>> getPaymentMethodStatus(String restaurantId) async {
+    try {
+      final res = await _client.functions.invoke('restaurant-payment-method', body: {
+        'action': 'status',
+        'restaurantId': restaurantId,
+      });
+      return res.data as Map<String, dynamic>;
+    } catch (e) {
+      throw Exception(_functionErrorMessage(e));
+    }
+  }
+
+  static Future<String> startPaymentMethodSetup(String restaurantId) async {
+    try {
+      final res = await _client.functions.invoke('restaurant-payment-method', body: {
+        'action': 'setup',
+        'restaurantId': restaurantId,
+      });
+      final data = res.data as Map<String, dynamic>;
+      return data['url'] as String;
+    } catch (e) {
+      throw Exception(_functionErrorMessage(e));
+    }
   }
 
   static RealtimeChannel subscribeToRiderCall(String callId, void Function() onUpdate) {

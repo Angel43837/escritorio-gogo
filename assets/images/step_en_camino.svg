@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 92.81 73.27">
+  <g id="Capa_1-2" data-name="Capa 1">
+    <g>
+      <path fill="#fff" d="M79.27,13.66l-6.55-6.55h-13.43c-2.83,0-5.13,2.3-5.13,5.13s2.3,5.13,5.13,5.13h9.72v14.19l-16.16,19h-17.47v-23.69H14.96C.66,26.87,0,41.83,0,41.83v17.47h8.52c0,7.72,6.26,13.98,13.98,13.98s13.98-6.26,13.98-13.98h21.4l21.4-25.77V13.66Z"/>
+      <rect fill="#fff" x="9.94" y="17.6" width="25.59" height="7.55" rx="1.12" ry="1.12"/>
+      <rect fill="#fff" x="2.46" y="9.14" width="33.08" height="5.74"/>
+      <path fill="#fff" d="M35.54,3.21c0-1.77-1.44-3.21-3.21-3.21H5.66c-1.77,0-3.21,1.44-3.21,3.21v3.18h33.08v-3.18Z"/>
+      <circle fill="#fff" cx="78.83" cy="59.3" r="13.98" transform="translate(-8.48 13.39) rotate(-9.22)"/>
+    </g>
+  </g>
+</svg>
